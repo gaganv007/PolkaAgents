@@ -1,0 +1,164 @@
+services:
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./backend/api_gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - BLOCKCHAIN_NODE_URL=http://substrate-node:9944
+      - CONTRACT_ADDRESS=5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL
+    volumes:
+      - ./backend/common:/app/common
+    networks:
+      - polka-agents-network
+    depends_on:
+      - substrate-node
+
+  # Chatbot Agent
+  chatbot-agent:
+    build:
+      context: ./backend/agents/chatbot
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./backend/common:/app/common
+      - model-data:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TRANSFORMERS_CACHE=/app/models
+    networks:
+      - polka-agents-network
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+
+  # Translation Agent
+  translation-agent:
+    build:
+      context: ./backend/agents/translation
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./backend/common:/app/common
+      - model-data:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TRANSFORMERS_CACHE=/app/models
+    networks:
+      - polka-agents-network
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+
+  # Sentiment Analysis Agent
+  sentiment-agent:
+    build:
+      context: ./backend/agents/sentiment
+      dockerfile: Dockerfile
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./backend/common:/app/common
+      - model-data:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TRANSFORMERS_CACHE=/app/models
+    networks:
+      - polka-agents-network
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+        reservations:
+          memory: 1G
+
+  # Summarization Agent
+  summarization-agent:
+    build:
+      context: ./backend/agents/summarization
+      dockerfile: Dockerfile
+    ports:
+      - "8004:8004"
+    volumes:
+      - ./backend/common:/app/common
+      - model-data:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TRANSFORMERS_CACHE=/app/models
+    networks:
+      - polka-agents-network
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+
+  # Job Application Writer Agent
+  job-application-agent:
+    build:
+      context: ./backend/agents/job_application
+      dockerfile: Dockerfile
+    ports:
+      - "8005:8005"
+    volumes:
+      - ./backend/common:/app/common
+      - model-data:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TRANSFORMERS_CACHE=/app/models
+    networks:
+      - polka-agents-network
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+
+  # Streamlit Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8501:8501"
+    environment:
+      - API_URL=http://api-gateway:8000
+    networks:
+      - polka-agents-network
+    depends_on:
+      - api-gateway
+
+  # Substrate Node
+  substrate-node:
+    image: parity/substrate:latest
+    ports:
+      - "9933:9933"
+      - "9944:9944"
+      - "30333:30333"
+    command: --dev --ws-external --rpc-external
+    volumes:
+      - substrate-data:/data
+    networks:
+      - polka-agents-network
+
+networks:
+  polka-agents-network:
+    driver: bridge
+
+volumes:
+  model-data:
+    driver: local
+  substrate-data:
+    driver: local
