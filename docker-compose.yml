@@ -132,7 +132,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "8501:8501"
+      - "8502:8501"            # Host 8502 → Container 8501
     environment:
       - API_URL=http://api-gateway:8000
     networks:
@@ -140,25 +140,26 @@ services:
     depends_on:
       - api-gateway
 
-  # Substrate Node
+  # Substrate Node (contracts-enabled development node)
   substrate-node:
     image: parity/substrate:latest
+    platform: linux/amd64     # Force amd64 image on arm64 host
+    command: --dev --ws-external --rpc-external
     ports:
       - "9933:9933"
       - "9944:9944"
       - "30333:30333"
-    command: --dev --ws-external --rpc-external
     volumes:
       - substrate-data:/data
     networks:
       - polka-agents-network
-
-networks:
-  polka-agents-network:
-    driver: bridge
 
 volumes:
   model-data:
     driver: local
   substrate-data:
     driver: local
+
+networks:
+  polka-agents-network:
+    driver: bridge
